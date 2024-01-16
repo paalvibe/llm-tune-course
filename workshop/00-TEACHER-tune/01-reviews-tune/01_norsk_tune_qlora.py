@@ -23,8 +23,9 @@
 
 # %pip install git+https://github.com/huggingface/peft.git
 # %pip install torch==2.1.0 accelerate==0.23.0
-# %pip install -U transformers==4.34.0
-# %pip install bitsandbytes==0.41.1 einops==0.7.0 trl==0.7.1 peft==0.5.0
+%pip install -U transformers==4.34.0
+%pip install bitsandbytes==0.41.1 einops==0.7.0 trl==0.7.1 peft==0.5.0
+# %pip install apache-beam
 dbutils.library.restartPython()
 
 # COMMAND ----------
@@ -44,33 +45,33 @@ local_output_dir = "/local_disk0/results-norskgpt"
 
 from datasets import load_dataset
 
-def load_and_clean_wiki():
-    dataset = load_dataset('wiki40b', 'no', beam_runner='DirectRunner', split="train")
-    #dataset = load_dataset('wiki40b', 'sv', beam_runner='DirectRunner')
-    dataset = dataset.remove_columns(['wikidata_id', 'version_id'])
-    filtered_dataset = dataset.map(filter_wikipedia)
+def load_and_clean_dataset():
+    dataset = load_dataset('NbAiLab/norwegian_parliament', split="train")
+    dataset = dataset.remove_columns(['date', 'label'])
+    return dataset
+    # filtered_dataset = dataset.map(filter_set)
     # filtered_dataset[:3]
     # print(filtered_dataset[:3])
-    return filtered_dataset
+    # return filtered_dataset
 
-def filter_wikipedia(batch):
-    batch["text"] = " ".join(batch["text"].split("\
-_START_SECTION_\
-"))
-    batch["text"] = " ".join(batch["text"].split("\
-_START_ARTICLE_\
-"))
-    batch["text"] = " ".join(batch["text"].split("\
-_START_ARTICLE_\
-"))
-    batch["text"] = " ".join(batch["text"].split("\
-_START_PARAGRAPH_\
-"))
-    batch["text"] = " ".join(batch["text"].split("_NEWLINE_"))
-    batch["text"] = " ".join(batch["text"].split("\xa0"))
-    return batch
+# def filter_wikipedia(batch):
+#     batch["text"] = " ".join(batch["text"].split("\
+# _START_SECTION_\
+# "))
+#     batch["text"] = " ".join(batch["text"].split("\
+# _START_ARTICLE_\
+# "))
+#     batch["text"] = " ".join(batch["text"].split("\
+# _START_ARTICLE_\
+# "))
+#     batch["text"] = " ".join(batch["text"].split("\
+# _START_PARAGRAPH_\
+# "))
+#     batch["text"] = " ".join(batch["text"].split("_NEWLINE_"))
+#     batch["text"] = " ".join(batch["text"].split("\xa0"))
+#     return batch
 
-dataset = load_and_clean_wiki()
+dataset = load_and_clean_dataset()
 
 # dataset_name = "databricks/databricks-dolly-15k"
 # dataset = load_dataset(dataset_name, split="train")
@@ -148,14 +149,22 @@ dataset["text"][0]
 
 # COMMAND ----------
 
+
+
+# COMMAND ----------
+
+
+
+# COMMAND ----------
+
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig, AutoTokenizer
 
 # it is suggested to pin the revision commit hash and not change it for reproducibility because the uploader might change the model afterwards; you can find the commmit history of Mistral-7B-v0.1 in https://huggingface.co/mistralai/Mistral-7B-v0.1/commits/main
-model = "mistralai/Mistral-7B-v0.1"
+model_name = "mistralai/Mistral-7B-v0.1"
 revision = "f801b4a1012022c23ef76287422b9f11eb901061"
 
-tokenizer = AutoTokenizer.from_pretrained(model, trust_remote_code=True)
+tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
 tokenizer.pad_token = tokenizer.eos_token
 
 bnb_config = BitsAndBytesConfig(
@@ -165,7 +174,7 @@ bnb_config = BitsAndBytesConfig(
 )
 
 model = AutoModelForCausalLM.from_pretrained(
-    model,
+    model_name,
     quantization_config=bnb_config,
     revision=revision,
     trust_remote_code=True,
@@ -392,11 +401,11 @@ input_example=pd.DataFrame({
 
 with mlflow.start_run() as run:
     mlflow.pyfunc.log_model(
-        "norskmodel",
+        "norsk7bqloramistral", # "model"
         python_model=Mistral7BQLORANORSK(),
         artifacts={'repository' : snapshot_location, "lora": peft_model_id},
         pip_requirements=["torch", "transformers", "accelerate", "einops", "loralib", "bitsandbytes", "peft"],
-        input_example=pd.DataFrame({"prompt":["what is ML?"], "temperature": [0.5],"max_tokens": [100]}),
+        input_example=pd.DataFrame({"prompt":["hva er ML?"], "temperature": [0.5],"max_tokens": [100]}),
         signature=signature
     )
 
@@ -432,3 +441,7 @@ text_example=pd.DataFrame({
 
 # Predict on a Pandas DataFrame.
 loaded_model.predict(text_example)
+
+# COMMAND ----------
+
+
