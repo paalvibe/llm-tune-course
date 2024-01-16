@@ -399,9 +399,11 @@ input_example=pd.DataFrame({
             "temperature": [0.5],
             "max_tokens": [100]})
 
+mlflowmodel_name = "norsk7bqloramistral"
+
 with mlflow.start_run() as run:
     mlflow.pyfunc.log_model(
-        "norsk7bqloramistral", # "model"
+        mlflowmodel_name, # "model"
         python_model=Mistral7BQLORANORSK(),
         artifacts={'repository' : snapshot_location, "lora": peft_model_id},
         pip_requirements=["torch", "transformers", "accelerate", "einops", "loralib", "bitsandbytes", "peft"],
@@ -413,6 +415,12 @@ with mlflow.start_run() as run:
 
 # MAGIC %md
 # MAGIC Run model inference with the model logged in MLFlow.
+
+# COMMAND ----------
+
+run_id = run.info.run_id
+logged_model = f"runs:/{run_id}/{mlflowmodel_name}"
+print(f"logged_model: {logged_model}")
 
 # COMMAND ----------
 
@@ -430,9 +438,10 @@ Hvis jeg får korona og isolerer meg selv og det ikke er alvorlig, er det noen m
 ### Response: """
 # Load model as a PyFuncModel.
 run_id = run.info.run_id
-logged_model = f"runs:/{run_id}/model"
+logged_model = f"runs:/{run_id}/{mlflowmodel_name}"
 
 loaded_model = mlflow.pyfunc.load_model(logged_model)
+print(f"logged_model: {logged_model}")
 
 text_example=pd.DataFrame({
             "prompt":[prompt],
@@ -444,11 +453,17 @@ loaded_model.predict(text_example)
 
 # COMMAND ----------
 
-
+# MAGIC %md ## Save model to a volume for later retrieval
+# MAGIC
+# MAGIC ...if necessary.
 
 # COMMAND ----------
 
 trainer.save_model("/Volumes/training/data/tunedmodels/parliament/")
+
+# COMMAND ----------
+
+# MAGIC %ls -lh /Volumes/training/data/tunedmodels/parliament/
 
 # COMMAND ----------
 

@@ -4,6 +4,10 @@
 
 # COMMAND ----------
 
+# MAGIC %mkdir -p /Volumes/training/data/tunedmodels/mistralparliament/
+
+# COMMAND ----------
+
 # MAGIC %mkdir -p /Volumes/training/data/tunedmodels/parliament/
 
 # COMMAND ----------
