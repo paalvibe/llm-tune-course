@@ -445,3 +445,11 @@ loaded_model.predict(text_example)
 # COMMAND ----------
 
 
+
+# COMMAND ----------
+
+trainer.save_model("/Volumes/training/data/tunedmodels/parliament/")
+
+# COMMAND ----------
+
+
