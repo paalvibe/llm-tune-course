@@ -1,16 +1,22 @@
 # Databricks notebook source
 # MAGIC %md
 # MAGIC
-# MAGIC # Serving Mistral-7B-Instruct via vllm with a cluster driver proxy app
+# MAGIC # Serving Llama-2-13b-chat-hf via vllm with a cluster driver proxy app
 # MAGIC
-# MAGIC The [Mistral-7B-Instruct-v0.1](https://huggingface.co/mistralai/Mistral-7B-Instruct-v0.1) Large Language Model (LLM) is a instruct fine-tuned version of the [Mistral-7B-v0.1](https://huggingface.co/mistralai/Mistral-7B-v0.1) generative text model using a variety of publicly available conversation datasets.
+# MAGIC [Llama 2](https://huggingface.co/meta-llama) is a collection of pretrained and fine-tuned generative text models ranging in scale from 7 billion to 70 billion parameters. It is trained with 2T tokens and supports context length window upto 4K tokens. [Llama-2-13b-chat-hf](https://huggingface.co/meta-llama/Llama-2-13b-chat-hf) is the 13B fine-tuned model, optimized for dialogue use cases and converted for the Hugging Face Transformers format.
+# MAGIC
+# MAGIC For reference: https://github.com/databricks/databricks-ml-examples/blob/master/llm-models/llamav2/llamav2-13b/01_load_inference.py
+# MAGIC
 # MAGIC
 # MAGIC [vllm](https://github.com/vllm-project/vllm/tree/main) is an open-source library that makes LLM inference fast with various optimizations.
 # MAGIC
 # MAGIC Environment for this notebook:
-# MAGIC - Runtime: 14.0 GPU ML Runtime
-# MAGIC - Instance: `g5.xlarge` on AWS, `Standard_NV36ads_A10_v5` on Azure
-# MAGIC - Will not run on g4dn.4xlarge
+# MAGIC - Runtime: 13.2 GPU ML Runtime
+# MAGIC - Instance: `g5.12xlarge` on AWS, `Standard_NV72ads_A10_v5` or `Standard_NC24ads_A100_v4` on Azure
+# MAGIC GPU instances that have at least 2 A10 GPUs would be enough for inference on single input (batch inference requires slightly more memory).
+# MAGIC
+# MAGIC Requirements:
+# MAGIC   - To get the access of the model on HuggingFace, please visit the [Meta website](https://ai.meta.com/resources/models-and-libraries/llama-downloads) and accept our license terms and acceptable use policy before submitting this form. Requests will be processed in 1-2 days.
 
 # COMMAND ----------
 

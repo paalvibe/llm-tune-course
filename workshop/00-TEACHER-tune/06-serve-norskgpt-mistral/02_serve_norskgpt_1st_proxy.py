@@ -30,13 +30,23 @@
 
 # COMMAND ----------
 
+# Get hugging face token to log into hugging face
+hf_token = dbutils.secrets.get(scope="llmtuning", key="huggingfacekey")
+
+# COMMAND ----------
+
+from huggingface_hub import login
+login(token=hf_token)
+
+# COMMAND ----------
+
 from vllm import LLM
 
 # it is suggested to pin the revision commit hash and not change it for reproducibility because the uploader might change the model afterwards; you can find the commmit history of Mistral-7B-Instruct-v0. in https://huggingface.co/bineric/NorskGPT-Mistral-7b/commits/main
 model = "bineric/NorskGPT-Mistral-7b"
 revision = "198c803eeec43825fa0f9bb914b2e3d1f798b607"
 
-llm = LLM(model=model, revision=revision)
+llm = LLM(model=model, revision=revision, token="hf_token")
 
 # COMMAND ----------
 
