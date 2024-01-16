@@ -61,7 +61,7 @@ Hvis jeg får korona og isolerer meg selv og det ikke er alvorlig, er det noen m
 ### Response: """
 # Load model as a PyFuncModel.
 run_id = run.info.run_id
-logged_model = f"runs:/{run_id}/{mlflowmodel_name}"
+# logged_model = f"runs:/{run_id}/{mlflowmodel_name}"
 
 loaded_model = mlflow.pyfunc.load_model(logged_model)
 print(f"logged_model: {logged_model}")
