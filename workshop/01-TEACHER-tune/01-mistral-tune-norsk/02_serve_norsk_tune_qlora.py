@@ -25,7 +25,6 @@
 # %pip install torch==2.1.0 accelerate==0.23.0
 %pip install -U transformers==4.34.0
 %pip install bitsandbytes==0.41.1 einops==0.7.0 trl==0.7.1 peft==0.5.0
-# %pip install apache-beam
 dbutils.library.restartPython()
 
 # COMMAND ----------
