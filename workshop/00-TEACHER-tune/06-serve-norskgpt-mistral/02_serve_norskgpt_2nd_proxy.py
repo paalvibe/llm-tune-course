@@ -102,7 +102,7 @@ def serve_mistral_7b_instruct():
 from dbruntime.databricks_repl_context import get_context
 ctx = get_context()
 
-port = "8035"
+port = "8001"
 driver_proxy_api = f"https://{ctx.browserHostName}/driver-proxy-api/o/0/{ctx.clusterId}/{port}"
 
 print(f"""
@@ -121,7 +121,7 @@ port = {port}
 # COMMAND ----------
 
 # Create table in the metastore
-constants_table = "training.llm_langchain_shared.server5_constants"
+constants_table = "training.llm_langchain_shared.norskgpt_server2_constants"
 # DeltaTable.createIfNotExists(spark) \
 #   .tableName(constants_table) \
 #   .addColumn("key", "STRING") \
@@ -152,9 +152,11 @@ spark.sql(f"""
   ON TABLE {constants_table}
   TO `account users`""")
 
+
 # Set ownership of table to training group so all training users can recreate these credentials
 spark.sql(f"""
 ALTER TABLE {constants_table} SET OWNER TO training;""")
+
 
 # COMMAND ----------
 
