@@ -14,128 +14,47 @@
 
 # COMMAND ----------
 
-# MAGIC %md
-# MAGIC ## Install python libs
+# %pip install -U vllm==0.2.0 transformers==4.34.0 accelerate==0.20.3
+%pip install vllm==0.2.0
+%pip install -U transformers==4.34.0
+%pip install bitsandbytes==0.41.1 einops==0.7.0 trl==0.7.1 peft==0.5.0
+dbutils.library.restartPython()
 
 # COMMAND ----------
 
-# %pip install git+https://github.com/huggingface/peft.git
-# %pip install torch==2.1.0 accelerate==0.23.0
-# %pip install -U transformers==4.34.0
-# %pip install -U transformers==4.34.0
-# %pip install bitsandbytes==0.41.1 einops==0.7.0 trl==0.7.1 peft==0.5.0 torch==2.1.0 accelerate==0.23.0 transformers==4.34.0
-# %pip install -U vllm==0.2.0
-# %pip install -U vllm==0.2.0 transformers==4.34.0 accelerate==0.20.3
-
-%pip install -U transformers==4.34.0
-%pip install bitsandbytes==0.41.1 einops==0.7.0 trl==0.7.1 peft==0.5.0
-
-dbutils.library.restartPython()
-
-
-#18 0.298 dependencies:
-#18 0.298 - python=3.10.12
-#18 0.298 - pip<=22.3.1
-#18 0.298 - pip:
-#18 0.298   - mlflow==2.8.1
-#18 0.298   - torch
-#18 0.298   - transformers
-#18 0.298   - accelerate
-#18 0.298   - einops
-#18 0.298   - loralib
-#18 0.298   - bitsandbytes
-#18 0.298   - peft
+# MAGIC %md
+# MAGIC ## Inference
+# MAGIC The example in the model card should also work on Databricks with the same environment.
 
 # COMMAND ----------
 
 # Get hugging face token to log into hugging face
-# hf_token = dbutils.secrets.get(scope="llmtuning", key="huggingfacekey")
+hf_token = dbutils.secrets.get(scope="llmtuning", key="huggingfacekey")
 
 # COMMAND ----------
 
-mlflowmodel_name = "norsk7bqloramistral"
-run_id = "4ea2ed325d9644898350feea93d4f5c8"
-logged_model = f"runs:/{run_id}/{mlflowmodel_name}"
-print(f"logged_model: {logged_model}")
+from huggingface_hub import login
+login(token=hf_token)
 
 # COMMAND ----------
 
-# MAGIC %md
-# MAGIC ## from pretrained example
-# MAGIC https://mlflow.org/docs/latest/_modules/mlflow/transformers.html
+from vllm import LLM
+
+# it is suggested to pin the revision commit hash and not change it for reproducibility because the uploader might change the model afterwards; you can find the commmit history of Mistral-7B-Instruct-v0. in https://huggingface.co/bineric/NorskGPT-Mistral-7b/commits/main
+model = "bineric/NorskGPT-Mistral-7b"
+revision = "198c803eeec43825fa0f9bb914b2e3d1f798b607"
+
+llm = LLM(model=model, revision=revision)
 
 # COMMAND ----------
 
-import mlflow
-mlflowmodel_name = "norsk7bqloramistral500runs"
-# models = mlflow.search_registered_models(filter_string=f"name = '{mlflowmodel_name}'")
-# artifacts_url = models[0].latest_versions[0].source
-
-# COMMAND ----------
-
-mlflowmodel_name
-
-# COMMAND ----------
-
-loaded_model = mlflow.pyfunc.load_model(model_uri=f"models:/{mlflowmodel_name}/2") # works
-# mlflow.set_registry_uri('databricks-uc')
-# loaded_model = mlflow.pyfunc.load_model(model_uri=f"models:/{mlflowmodel_name}@2")
-# loaded_model = mlflow.pyfunc.load_model("dbfs:/databricks/mlflow-tracking/b011c0bde56242718d3384806e37e7e7/15bd6be40e70461597f6fa785c8a684a/artifacts/norsk7bqloramistral250")
-
-# COMMAND ----------
-
-# Make a prediction using the loaded model
-loaded_model.predict(
-    {
-    "prompt": "Hva er rollen til stortinget?",
-    "temperature": 0.5,
-    "max_tokens": 150
-    }
-)
-
-# COMMAND ----------
-
-# Make a prediction using the loaded model
-loaded_model.predict(
-    {
-    "prompt": "Hva er rollen til stortinget?",
-    "temperature": 0.9,
-    "max_tokens": 150
-    }
-)
-
-# COMMAND ----------
-
-
-
-# COMMAND ----------
-
-
-
-# COMMAND ----------
-
-
-
-# COMMAND ----------
-
-
-
-# COMMAND ----------
-
-
-
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC ## Add instruction prompt with sys section as guard rail
-
-# COMMAND ----------
+from vllm import SamplingParams
 
 # Prompt templates as follows could guide the model to follow instructions and respond to the input, and empirically it turns out to make Falcon models produce better responses
 DEFAULT_SYSTEM_PROMPT = """\
 You are a helpful, respectful and honest assistant. Always answer as helpfully as possible, while being safe. Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. Please ensure that your responses are socially unbiased and positive in nature.
 
-If a question does not make any sense, or is not factually coherent, explain why instead of answering something not correct. If you don't know the answer to a question, please don't share false information. Answer in Norwegian."""
+If a question does not make any sense, or is not factually coherent, explain why instead of answering something not correct. If you don't know the answer to a question, please don't share false information."""
 
 INTRO_BLURB = "Below is an instruction that describes a task. Write a response that appropriately completes the request."
 PROMPT_FOR_GENERATION_FORMAT = """
@@ -151,58 +70,29 @@ PROMPT_FOR_GENERATION_FORMAT = """
     instruction="{instruction}"
 )
 
-# PROMPT_FOR_GENERATION_FORMAT2 = """You are a helpful, respectful and honest assistant. Always answer as helpfully as possible, while being safe. Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. Please ensure that your responses are socially unbiased and positive in nature.
-
-# If a question does not make any sense, or is not factually coherent, explain why instead of answering something not correct. If you don't know the answer to a question, please don't share false information. Answer in Norwegian.
-
-# ### Instruction:
-
-# """
-
-# COMMAND ----------
-
-import pandas as pd
-
 # Define parameters to generate text
 def gen_text_for_serving(prompt, **kwargs):
-    orig_prompt = prompt
-    # prompt = PROMPT_FOR_GENERATION_FORMAT.format(instruction=prompt)
+    prompt = PROMPT_FOR_GENERATION_FORMAT.format(instruction=prompt)
 
     # the default max length is pretty small (20), which would cut the generated output in the middle, so it's necessary to increase the threshold to the complete response
-    if "context" not in kwargs:
-        kwargs["context"] = None
-
     if "max_tokens" not in kwargs:
         kwargs["max_tokens"] = 512
-    if "temperature" not in kwargs:
-        kwargs["temperature"] = 0.5
-    context = kwargs["context"]
-    max_tokens = kwargs["max_tokens"]
-    temperature = kwargs["temperature"]
 
-    
-    # sampling_params = SamplingParams(**kwargs)
+    sampling_params = SamplingParams(**kwargs)
 
-    text_example=pd.DataFrame({
-            "prompt":[prompt],
-            "temperature": [temperature],
-            "max_tokens": [max_tokens],
-            "context": context
-            })
+    outputs = llm.generate(prompt, sampling_params=sampling_params)
+    texts = [out.outputs[0].text for out in outputs]
 
-    # Predict on a Pandas DataFrame.
-    ret = loaded_model.predict(text_example)
-    ret = ret.replace(orig_prompt, "")
-    return ret
-
-output = gen_text_for_serving("Hvis jeg får korona og isolerer meg selv og det ikke er alvorlig, er det noen medisiner jeg kan ta? Svar på norsk.", temperature=0.5, max_tokens=100)
-print("output:", output)
+    return texts[0]
 
 # COMMAND ----------
 
-# With context, does not seem to work
-output = gen_text_for_serving("Hvis jeg får korona og isolerer meg selv og det ikke er alvorlig, er det noen medisiner jeg kan ta? Svar på norsk.", temperature=0.5, max_tokens=100, context="Hvis jeg får korona kan jeg legge meg på loftet.")
-print("output", output)
+print(gen_text_for_serving("How to master Python in 3 days?"))
+
+# COMMAND ----------
+
+# See full list of configurable args: https://github.com/vllm-project/vllm/blob/main/vllm/sampling_params.py
+print(gen_text_for_serving("How to master Python in 3 days?", temperature=0.1, max_tokens=100))
 
 # COMMAND ----------
 
@@ -225,7 +115,7 @@ def serve_mistral_7b_instruct():
 from dbruntime.databricks_repl_context import get_context
 ctx = get_context()
 
-port = "7571"
+port = "7173"
 driver_proxy_api = f"https://{ctx.browserHostName}/driver-proxy-api/o/0/{ctx.clusterId}/{port}"
 
 print(f"""
@@ -244,21 +134,12 @@ port = {port}
 # COMMAND ----------
 
 # Create table in the metastore
-
-server_num = 1
-constants_table = f"training.llm_langchain_shared.storting500_server{server_num}_constants"
+constants_table = "training.llm_langchain_shared.norskgpt_server3_constants"
 # DeltaTable.createIfNotExists(spark) \
 #   .tableName(constants_table) \
 #   .addColumn("key", "STRING") \
 #   .addColumn("val", "STRING")\
 #   .execute()
-
-catalog = "training"
-
-spark.sql(f"""
-CREATE CATALOG IF NOT EXISTS {catalog};
-""")
-
 
 schema = "training.llm_langchain_shared"
 # Grant select and modify permissions for the table to all users on the account.
@@ -284,9 +165,11 @@ spark.sql(f"""
   ON TABLE {constants_table}
   TO `account users`""")
 
+
 # Set ownership of table to training group so all training users can recreate these credentials
 spark.sql(f"""
-ALTER TABLE {constants_table} SET OWNER TO `academy-23-24`;""")
+ALTER TABLE {constants_table} SET OWNER TO training;""")
+
 
 # COMMAND ----------
 
@@ -297,7 +180,7 @@ print(host) # --> www.example.test
 
 # COMMAND ----------
 
-api_token = dbutils.notebook.entry_point.getDbutils().notebook().getContext().apiToken().get()
+
 
 # COMMAND ----------
 
@@ -312,10 +195,7 @@ constants = [
 ]
 constants_df = spark.createDataFrame(constants)
 constants_df.write.insertInto(constants_table, overwrite=True)
-
-# COMMAND ----------
-
-
+constants_df.show()
 
 # COMMAND ----------
 
@@ -345,9 +225,9 @@ constants_df.write.insertInto(constants_table, overwrite=True)
 # MAGIC
 # MAGIC request_mistral_7b("What is databricks?")
 # MAGIC ```
-# MAGIC Or you could try using ai_query([documentation](https://docs.databricks.com/sql/language-manual/functions/ai_query.html)) to call this driver proxy from Databricks SQL with:
+# MAGIC Or you could try using ai_query([doucmentation](https://docs.databricks.com/sql/language-manual/functions/ai_query.html)) to call this driver proxy from Databricks SQL with:
 # MAGIC ```
-# MAGIC SELECT ai_query('cluster_id:port', -- TODO: fill in the cluster_id and port number from output above.
+# MAGIC SELECT ai_query('cluster_id:port', -- TODO: fill in the cluster_id and port number from output above.  
 # MAGIC   named_struct('prompt', 'What is databricks?', 'temperature', CAST(0.1 AS Double)),
 # MAGIC   'returnType', 'STRING')
 # MAGIC ```
