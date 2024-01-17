@@ -12,6 +12,20 @@
 
 # COMMAND ----------
 
+# MAGIC %md ## Read the tuning code
+# MAGIC
+# MAGIC Unless you find it boring :)
+# MAGIC
+# MAGIC BUT DO NOT RUN IT!
+# MAGIC
+# MAGIC Tuning:
+# MAGIC workshop/01-TEACHER-tune/01-tune-mistral-storting/01_norsk_tune_qlora_250_runs
+# MAGIC
+# MAGIC Serving:
+# MAGIC workshop/01-TEACHER-tune/07-serve-storting250-mistral/02_serve_storting250_1st_proxy_from_registry
+
+# COMMAND ----------
+
 # MAGIC %md
 # MAGIC ## Inference examples
 
@@ -26,47 +40,12 @@
 
 # COMMAND ----------
 
-import os
-import requests
-import numpy as np
-import pandas as pd
-import json
-
-def create_tf_serving_json(data):
-  return {'inputs': {name: data[name].tolist() for name in data.keys()} if isinstance(data, dict) else data.tolist()}
-
-def score_model(dataset):
-  url = 'https://dbc-639f4875-165d.cloud.databricks.com/serving-endpoints/norsk7bqloramistral250/invocations'
-  headers = {'Authorization': f'Bearer {os.environ.get("DATABRICKS_TOKEN")}', 'Content-Type': 'application/json'}
-  ds_dict = {'dataframe_split': dataset.to_dict(orient='split')} if isinstance(dataset, pd.DataFrame) else create_tf_serving_json(dataset)
-  data_json = json.dumps(ds_dict, allow_nan=True)
-  response = requests.request(method='POST', headers=headers, url=url, data=data_json)
-  if response.status_code != 200:
-    raise Exception(f'Request failed with status {response.status_code}, {response.text}')
-  return response.json()
-
-score_model({
-  "prompt": "Hva er stortinget?",
-  "max_tokens": 100,
-  "temperature": 0.1
-})
-
-# COMMAND ----------
-
-
-
-# COMMAND ----------
-
-foo = bardoesntexist
-
-# COMMAND ----------
-
 
 
 # COMMAND ----------
 
 server_num = 1
-constants_table = f"training.llm_langchain_shared.server{server_num}_constants"
+constants_table = f"training.llm_langchain_shared.storting250_server{server_num}_constants"
 constants_df = spark.read.table(constants_table)
 raw_dict = constants_df.toPandas().to_dict()
 names = raw_dict['name'].values()
@@ -190,8 +169,18 @@ print(llm_context_chain.predict(instruction="Hva er stortingets funksjon?", cont
 # MAGIC %md
 # MAGIC
 # MAGIC ## Task: Get a good answer about the crucial conditions for Norwegian fishing exports.
-# MAGIC You can use context, but play also around with sentiment.
+# MAGIC You can use context, but play also around with temperature.
 
 # COMMAND ----------
 
 
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC
+# MAGIC ## Task: Use temperature (0-1) to get better results
+
+# COMMAND ----------
+
+print(llm_context_chain.predict(instruction="Hva er stortingets funksjon?", temperature=0.9)
