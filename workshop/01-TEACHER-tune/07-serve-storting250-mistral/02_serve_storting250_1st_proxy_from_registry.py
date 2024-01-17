@@ -188,7 +188,7 @@ def gen_text_for_serving(prompt, **kwargs):
 
     # Predict on a Pandas DataFrame.
     ret = loaded_model.predict(text_example)
-    ret = output.replace(orig_prompt, "")
+    ret = ret.replace(orig_prompt, "")
     return ret
 
 output = gen_text_for_serving("Hvis jeg får korona og isolerer meg selv og det ikke er alvorlig, er det noen medisiner jeg kan ta? Svar på norsk.", temperature=0.5, max_tokens=100)

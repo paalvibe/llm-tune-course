@@ -67,9 +67,9 @@ print(f"logged_model: {logged_model}")
 # COMMAND ----------
 
 import mlflow
-mlflowmodel_name = "norsk7bqloramistral250"
-models = mlflow.search_registered_models(filter_string=f"name = '{mlflowmodel_name}'")
-artifacts_url = models[0].latest_versions[0].source
+mlflowmodel_name = "norsk7bqloramistral500runs"
+# models = mlflow.search_registered_models(filter_string=f"name = '{mlflowmodel_name}'")
+# artifacts_url = models[0].latest_versions[0].source
 
 # COMMAND ----------
 
@@ -147,13 +147,13 @@ PROMPT_FOR_GENERATION_FORMAT = """
     instruction="{instruction}"
 )
 
-PROMPT_FOR_GENERATION_FORMAT2 = """You are a helpful, respectful and honest assistant. Always answer as helpfully as possible, while being safe. Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. Please ensure that your responses are socially unbiased and positive in nature.
+# PROMPT_FOR_GENERATION_FORMAT2 = """You are a helpful, respectful and honest assistant. Always answer as helpfully as possible, while being safe. Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. Please ensure that your responses are socially unbiased and positive in nature.
 
-If a question does not make any sense, or is not factually coherent, explain why instead of answering something not correct. If you don't know the answer to a question, please don't share false information. Answer in Norwegian.
+# If a question does not make any sense, or is not factually coherent, explain why instead of answering something not correct. If you don't know the answer to a question, please don't share false information. Answer in Norwegian.
 
-### Instruction:
+# ### Instruction:
 
-"""
+# """
 
 # COMMAND ----------
 
@@ -188,7 +188,7 @@ def gen_text_for_serving(prompt, **kwargs):
 
     # Predict on a Pandas DataFrame.
     ret = loaded_model.predict(text_example)
-    ret = ret.replace(orig_prompt, "")
+    ret = output.replace(orig_prompt, "")
     return ret
 
 output = gen_text_for_serving("Hvis jeg får korona og isolerer meg selv og det ikke er alvorlig, er det noen medisiner jeg kan ta? Svar på norsk.", temperature=0.5, max_tokens=100)
@@ -221,7 +221,7 @@ def serve_mistral_7b_instruct():
 from dbruntime.databricks_repl_context import get_context
 ctx = get_context()
 
-port = "7272"
+port = "7571"
 driver_proxy_api = f"https://{ctx.browserHostName}/driver-proxy-api/o/0/{ctx.clusterId}/{port}"
 
 print(f"""
@@ -241,8 +241,8 @@ port = {port}
 
 # Create table in the metastore
 
-server_num = 2
-constants_table = f"training.llm_langchain_shared.storting250_server{server_num}_constants"
+server_num = 1
+constants_table = f"training.llm_langchain_shared.storting500_server{server_num}_constants"
 # DeltaTable.createIfNotExists(spark) \
 #   .tableName(constants_table) \
 #   .addColumn("key", "STRING") \
