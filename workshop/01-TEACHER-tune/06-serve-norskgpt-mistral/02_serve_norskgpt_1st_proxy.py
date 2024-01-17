@@ -19,8 +19,11 @@
 
 # COMMAND ----------
 
-# MAGIC %pip install -U vllm==0.2.0 transformers==4.34.0 accelerate==0.20.3
-# MAGIC dbutils.library.restartPython()
+# %pip install -U vllm==0.2.0 transformers==4.34.0 accelerate==0.20.3
+%pip install vllm==0.2.0
+%pip install -U transformers==4.34.0
+%pip install bitsandbytes==0.41.1 einops==0.7.0 trl==0.7.1 peft==0.5.0
+dbutils.library.restartPython()
 
 # COMMAND ----------
 
@@ -46,7 +49,7 @@ from vllm import LLM
 model = "bineric/NorskGPT-Mistral-7b"
 revision = "198c803eeec43825fa0f9bb914b2e3d1f798b607"
 
-llm = LLM(model=model, revision=revision, token="hf_token")
+llm = LLM(model=model, revision=revision)
 
 # COMMAND ----------
 

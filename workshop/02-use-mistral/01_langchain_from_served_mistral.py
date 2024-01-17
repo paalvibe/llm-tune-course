@@ -25,7 +25,8 @@
 # MAGIC %md Get llm server constants from constants table
 
 # COMMAND ----------
-# server_num = 1
+
+server_num = 1
 constants_table = f"training.llm_langchain_shared.server{server_num}_constants"
 constants_df = spark.read.table(constants_table)
 raw_dict = constants_df.toPandas().to_dict()
@@ -97,6 +98,9 @@ context = """Stortingets oppgaver som nasjonalforsamling er nedfelt i Grunnloven
 
 print(llm_context_chain.predict(instruction="Hva er stortingets funksjon?", context=context).lstrip())
 
+# COMMAND ----------
+
+# MAGIC
 # MAGIC %md
 # MAGIC
 # MAGIC ### Simpler context
@@ -107,6 +111,7 @@ context = """Stortinget er Norges folkevalgte nasjonalforsamling. De viktigste o
 
 print(llm_context_chain.predict(instruction="Hva er stortingets funksjon?", context=context).lstrip())
 
+# COMMAND ----------
 
 # MAGIC %md
 # MAGIC
@@ -124,7 +129,7 @@ print(llm_context_chain.predict(instruction="Hva er stortingets funksjon?", cont
 # MAGIC
 # MAGIC ## Task: Get a good answer in Norwegian about which ideological difference there are between the main parties
 # MAGIC in Norway, without context.
-
+# MAGIC
 
 # COMMAND ----------
 
@@ -151,5 +156,3 @@ print(llm_context_chain.predict(instruction="Hva er stortingets funksjon?", cont
 # COMMAND ----------
 
 
-
-# COMMAND ----------

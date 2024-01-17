@@ -31,8 +31,8 @@ dbutils.library.restartPython()
 # COMMAND ----------
 
 # Define some parameters
-model_output_location = "/local_disk0/mistral-7b-qlora-fine-tune-norskgpt-2"
-local_output_dir = "/local_disk0/results-norskgpt-2"
+model_output_location = "/local_disk0/mistral-7b-storting250"
+local_output_dir = "/local_disk0/results-mistral-7b-storting250"
 
 # COMMAND ----------
 
@@ -399,7 +399,7 @@ input_example=pd.DataFrame({
             "temperature": [0.5],
             "max_tokens": [100]})
 
-mlflowmodel_name = "norsk7bqloramistral"
+mlflowmodel_name = "norsk7bqloramistral250"
 
 with mlflow.start_run() as run:
     mlflow.pyfunc.log_model(
@@ -464,6 +464,51 @@ trainer.save_model("/Volumes/training/data/tunedmodels/parliament/")
 # COMMAND ----------
 
 # MAGIC %ls -lh /Volumes/training/data/tunedmodels/parliament/
+
+# COMMAND ----------
+
+import mlflow
+from mlflow.entities import ViewType
+
+all_experiments = [exp.experiment_id for exp in mlflow.search_experiments()]
+runs = mlflow.search_runs(
+    experiment_ids=all_experiments,
+    # filter_string="params.model = 'Inception'",
+    run_view_type=ViewType.ALL,
+)
+runs
+
+# COMMAND ----------
+
+
+
+# COMMAND ----------
+
+runs
+
+# COMMAND ----------
+
+from mlflow import MlflowClient
+from mlflow.entities import ViewType
+
+# query = "params.model = 'CNN' and params.layers = '10' and metrics.`prediction accuracy` >= 0.945"
+all_experiments = [exp.experiment_id for exp in MlflowClient().search_experiments()]
+runs = MlflowClient().search_runs(
+     experiment_ids=all_experiments,
+#    filter_string=query,
+#    run_view_type=ViewType.ACTIVE_ONLY,
+)
+runs
+
+# COMMAND ----------
+
+# MAGIC %md ## Register model
+# MAGIC
+# MAGIC see: https://mlflow.org/docs/latest/models.html
+
+# COMMAND ----------
+
+mlflow.register_model(model_uri=logged_model, name=mlflowmodel_name, await_registration_for=900)
 
 # COMMAND ----------
 

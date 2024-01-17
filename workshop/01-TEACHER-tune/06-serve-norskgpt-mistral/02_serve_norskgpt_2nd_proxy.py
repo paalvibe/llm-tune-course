@@ -14,14 +14,27 @@
 
 # COMMAND ----------
 
-# MAGIC %pip install -U vllm==0.2.0 transformers==4.34.0 accelerate==0.20.3
-# MAGIC dbutils.library.restartPython()
+# %pip install -U vllm==0.2.0 transformers==4.34.0 accelerate==0.20.3
+%pip install vllm==0.2.0
+%pip install -U transformers==4.34.0
+%pip install bitsandbytes==0.41.1 einops==0.7.0 trl==0.7.1 peft==0.5.0
+dbutils.library.restartPython()
 
 # COMMAND ----------
 
 # MAGIC %md
 # MAGIC ## Inference
 # MAGIC The example in the model card should also work on Databricks with the same environment.
+
+# COMMAND ----------
+
+# Get hugging face token to log into hugging face
+hf_token = dbutils.secrets.get(scope="llmtuning", key="huggingfacekey")
+
+# COMMAND ----------
+
+from huggingface_hub import login
+login(token=hf_token)
 
 # COMMAND ----------
 

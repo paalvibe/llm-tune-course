@@ -19,14 +19,6 @@
 
 # COMMAND ----------
 
-# MAGIC %pip install git+https://github.com/huggingface/peft.git
-
-# COMMAND ----------
-
-dbutils.library.restartPython()
-
-# COMMAND ----------
-
 # %pip install git+https://github.com/huggingface/peft.git
 # %pip install torch==2.1.0 accelerate==0.23.0
 # %pip install -U transformers==4.34.0
@@ -81,62 +73,58 @@ artifacts_url = models[0].latest_versions[0].source
 
 # COMMAND ----------
 
-import peft
+# import torch
+# # from peft import PeftModel, PeftConfig
 
-# COMMAND ----------
+# class Mistral7BQLORANORSK(mlflow.pyfunc.PythonModel):
+#   def load_context(self, context):
+#     self.tokenizer = AutoTokenizer.from_pretrained(context.artifacts['repository'])
+#     self.tokenizer.pad_token = tokenizer.eos_token
+#     config = PeftConfig.from_pretrained(context.artifacts['lora'])
+#     base_model = AutoModelForCausalLM.from_pretrained(
+#       context.artifacts['repository'],
+#       return_dict=True,
+#       load_in_4bit=True,
+#       device_map={"":0},
+#       trust_remote_code=True,
+#     )
+#     self.model = PeftModel.from_pretrained(base_model, context.artifacts['lora'])
 
-import torch
-# from peft import PeftModel, PeftConfig
+#   def predict(self, context, model_input):
+#     prompt = model_input["prompt"][0]
+#     temperature = model_input.get("temperature", [1.0])[0]
+#     max_tokens = model_input.get("max_tokens", [100])[0]
+#     batch = self.tokenizer(prompt, padding=True, truncation=True,return_tensors='pt').to('cuda')
+#     with torch.cuda.amp.autocast():
+#       output_tokens = self.model.generate(
+#           input_ids = batch.input_ids,
+#           max_new_tokens=max_tokens,
+#           temperature=temperature,
+#           top_p=0.7,
+#           num_return_sequences=1,
+#           do_sample=True,
+#           pad_token_id=tokenizer.eos_token_id,
+#           eos_token_id=tokenizer.eos_token_id,
+#       )
+#     generated_text = self.tokenizer.decode(output_tokens[0], skip_special_tokens=True)
 
-class Mistral7BQLORANORSK(mlflow.pyfunc.PythonModel):
-  def load_context(self, context):
-    self.tokenizer = AutoTokenizer.from_pretrained(context.artifacts['repository'])
-    self.tokenizer.pad_token = tokenizer.eos_token
-    config = PeftConfig.from_pretrained(context.artifacts['lora'])
-    base_model = AutoModelForCausalLM.from_pretrained(
-      context.artifacts['repository'],
-      return_dict=True,
-      load_in_4bit=True,
-      device_map={"":0},
-      trust_remote_code=True,
-    )
-    self.model = PeftModel.from_pretrained(base_model, context.artifacts['lora'])
-
-  def predict(self, context, model_input):
-    prompt = model_input["prompt"][0]
-    temperature = model_input.get("temperature", [1.0])[0]
-    max_tokens = model_input.get("max_tokens", [100])[0]
-    batch = self.tokenizer(prompt, padding=True, truncation=True,return_tensors='pt').to('cuda')
-    with torch.cuda.amp.autocast():
-      output_tokens = self.model.generate(
-          input_ids = batch.input_ids,
-          max_new_tokens=max_tokens,
-          temperature=temperature,
-          top_p=0.7,
-          num_return_sequences=1,
-          do_sample=True,
-          pad_token_id=tokenizer.eos_token_id,
-          eos_token_id=tokenizer.eos_token_id,
-      )
-    generated_text = self.tokenizer.decode(output_tokens[0], skip_special_tokens=True)
-
-    return generated_text
+#     return generated_text
 
 # COMMAND ----------
 
 # mlflow.set_registry_uri('databricks-uc')
 # loaded_model = mlflow.pyfunc.load_model(model_uri=f"models:/{mlflowmodel_name}@2")
 # loaded_model = mlflow.pyfunc.load_model("dbfs:/databricks/mlflow-tracking/b011c0bde56242718d3384806e37e7e7/15bd6be40e70461597f6fa785c8a684a/artifacts/norsk7bqloramistral250") # works
-loaded_model = mlflow.pyfunc.load_model(artifacts_url)
+loaded_model = mlflow.pyfunc.load_model(model_uri=f"models:/{mlflowmodel_name}/2")
 # Make a prediction using the loaded model
 
 # COMMAND ----------
 
 loaded_model.predict(
-    {"prompt": "Hva er rollen til stortinget?"},
-    params={
-        "temperature": 0.5,
-        "max_new_tokens": 150,
+    {
+    "prompt": "Hva er rollen til stortinget?",
+    "temperature": 0.5,
+    "max_tokens": 150
     }
 )
 
