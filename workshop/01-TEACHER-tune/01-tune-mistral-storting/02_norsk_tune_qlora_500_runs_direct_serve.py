@@ -520,25 +520,6 @@ PROMPT_FOR_GENERATION_FORMAT = """
 
 # COMMAND ----------
 
-Hvis jeg får korona og isolerer meg selv og det ikke er alvorlig, er det noen medisiner jeg kan ta?
-
-### Response: """
-# Load model as a PyFuncModel.
-run_id = run.info.run_id
-logged_model = f"runs:/{run_id}/{mlflowmodel_name}"
-
-loaded_model = mlflow.pyfunc.load_model(logged_model)
-print(f"logged_model: {logged_model}")
-
-text_example=pd.DataFrame({
-            "prompt":[prompt],
-            "temperature": [0.5],
-            "max_tokens": [100]})
-
-# Predict on a Pandas DataFrame.
-loaded_model.predict(text_example)
-
-
 # Define parameters to generate text
 def gen_text_for_serving(prompt, **kwargs):
     prompt = PROMPT_FOR_GENERATION_FORMAT.format(instruction=prompt)
